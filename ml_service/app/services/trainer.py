@@ -9,24 +9,31 @@ from ml_service.app.services.preprocessor import DataPreprocessor, FEATURE_COLUM
 def generate_synthetic_data(num_samples: int = 500) -> pd.DataFrame:
     np.random.seed(42)
 
-    attendance_rate = np.random.uniform(40.0, 100.0, num_samples)
-    consecutive_absences = np.random.randint(0, 15, num_samples)
-    score_trend = np.random.uniform(-10.0, 10.0, num_samples)
-    avg_test_score = np.random.uniform(30.0, 95.0, num_samples)
-    attempt_ratio = np.random.uniform(1.0, 3.5, num_samples)
-    fee_delay_days = np.random.randint(0, 90, num_samples)
-    assignment_submission_rate = np.random.uniform(30.0, 100.0, num_samples)
+    # Sample wider, realistic ranges so the model learns from extremes (e.g. 0% attendance, very low test scores)
+    attendance_rate = np.random.uniform(0.0, 100.0, num_samples)
+    consecutive_absences = np.random.randint(0, 20, num_samples)
+    score_trend = np.random.uniform(-15.0, 15.0, num_samples)
+    avg_test_score = np.random.uniform(10.0, 100.0, num_samples)
+    attempt_ratio = np.random.uniform(1.0, 4.0, num_samples)
+    fee_delay_days = np.random.randint(0, 120, num_samples)
+    assignment_submission_rate = np.random.uniform(0.0, 100.0, num_samples)
 
-    # Dropout label condition
+    # Adjust dropout probability formula:
+    # 1. Heavily weight low attendance and low test scores (standard indicators)
+    # 2. Lower the weight of attempt_ratio and fee delay so they don't overpower attendance
+    # 3. Add contribution for high consecutive absences and low assignment rates
     dropout_prob = (
-        (100.0 - attendance_rate) * 0.35 +
-        (100.0 - avg_test_score) * 0.25 +
-        (attempt_ratio - 1.0) * 15.0 +
-        (fee_delay_days / 30.0) * 10.0
+        (100.0 - attendance_rate) * 0.50 +
+        (100.0 - avg_test_score) * 0.30 +
+        (consecutive_absences / 20.0) * 10.0 +
+        (attempt_ratio - 1.0) * 5.0 +
+        (fee_delay_days / 120.0) * 10.0 +
+        (100.0 - assignment_submission_rate) * 0.05
     ) / 100.0
 
-    dropout = (dropout_prob + np.random.normal(0, 0.1, num_samples)) > 0.55
-    dropout_labels = dropout.astype(int)
+    # Classify as dropout if the probability is high (threshold 0.5)
+    dropout = (dropout_prob + np.random.normal(0, 0.05, num_samples)) > 0.50
+    dropout_labels = np.clip(dropout.astype(int), 0, 1)
 
     df = pd.DataFrame({
         "attendance_rate": attendance_rate,
