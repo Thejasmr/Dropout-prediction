@@ -1,0 +1,14 @@
+{
+  "name": "dropout-prediction-root",
+  "version": "1.0.0",
+  "description": "EduPulse AI Student Dropout Prediction & Counseling Platform",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:ml\"",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "node run-services.js backend",
+    "dev:ml": "node run-services.js ml_service"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

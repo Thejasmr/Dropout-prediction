@@ -1,0 +1,124 @@
+# ==============================================================================
+# EduPulse AI - Root Git Ignore Configuration
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# AI Assistants, Code Analyzers & Local Agent Caches
+# ------------------------------------------------------------------------------
+.agents
+.claude/
+.qodo/
+.gemini/
+.copilot/
+.cursor/
+
+# ------------------------------------------------------------------------------
+# System & OS Artifacts
+# ------------------------------------------------------------------------------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+*.tmp
+*.temp
+*.swp
+*~
+
+# ------------------------------------------------------------------------------
+# IDE / Editor Configurations
+# ------------------------------------------------------------------------------
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.user
+*.workspace
+.history/
+
+# ------------------------------------------------------------------------------
+# Node & Frontend (Next.js)
+# ------------------------------------------------------------------------------
+# Dependency directories (recursive)
+**/node_modules/
+
+# Next.js / Nuxt / static exports
+**/.next/
+**/out/
+**/dist/
+**/build/
+.next/
+out/
+dist/
+build/
+
+# Debug and performance logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# ------------------------------------------------------------------------------
+# Python (Backend & ML Service)
+# ------------------------------------------------------------------------------
+# Python Virtual Environments (recursive)
+**/venv/
+**/env/
+**/.venv/
+**/ENV/
+venv/
+env/
+.venv/
+ENV/
+
+# Python Bytecode, Caches, & DLLs (recursive)
+**/__pycache__/
+**/.pytest_cache/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+# Testing & Coverage
+.coverage
+.coverage.*
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+.pytest_cache/
+
+# Celery
+celerybeat.pid
+celerybeat-schedule
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# ------------------------------------------------------------------------------
+# Secrets & Environment Configurations (CRITICAL)
+# ------------------------------------------------------------------------------
+# Specific environment configurations (excludes .env.example templates)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+**/.env.*.local
+
+# ------------------------------------------------------------------------------
+# Local Data & Database Outputs
+# ------------------------------------------------------------------------------
+# Ignore all generated JSON DB files in data, but keep the directory using .gitkeep
+backend/data/*
+!backend/data/.gitkeep
