@@ -54,6 +54,6 @@ class StudentListResponse(BaseModel):
 
 
 class StudentOverrideRequest(BaseModel):
-    score: float
+    score: Optional[float] = None
     risk_level: str  # 'high', 'medium', 'low'
     reason: str

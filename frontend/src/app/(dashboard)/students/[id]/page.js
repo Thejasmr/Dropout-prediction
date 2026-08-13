@@ -74,11 +74,14 @@ export default function StudentDetailPage() {
     counsellingMutation.mutate(newNote);
   };
 
-  // Build chart data from timeline (risk scores over time)
-  const scoreChartData = timeline.slice(-10).map(t => ({
-    date: t.calculated_at ? new Date(t.calculated_at).toLocaleDateString("en", { month: "short", day: "numeric" }) : "",
-    score: t.score != null ? parseFloat(t.score.toFixed(1)) : null,
-  }));
+  // Build chart data from timeline (risk scores over time, oldest first)
+  const scoreChartData = [...timeline]
+    .reverse()
+    .slice(-10)
+    .map(t => ({
+      date: t.calculated_at ? new Date(t.calculated_at).toLocaleDateString("en", { month: "short", day: "numeric" }) : "",
+      score: t.score != null ? parseFloat(t.score.toFixed(1)) : null,
+    }));
 
   const riskLevel = risk?.risk_level ?? student?.latest_risk_level;
   const riskScore = risk?.score ?? student?.latest_risk_score;

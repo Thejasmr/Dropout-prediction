@@ -130,6 +130,12 @@ async def compute_student_features(session, student_id):
 async def main():
     print("Connecting to database and fetching students...")
     async with AsyncSessionLocal() as session:
+        # Clear old non-overridden risk scores and system alerts to prevent clutter
+        from sqlalchemy import delete
+        await session.execute(delete(RiskScore).where(RiskScore.is_overridden == False))
+        await session.execute(delete(Alert).where(Alert.alert_type.in_(["high_risk", "medium_risk"])))
+        await session.commit()
+
         result = await session.execute(select(Student))
         students = result.scalars().all()
         print(f"Found {len(students)} students. Computing risk scores...")
@@ -171,15 +177,36 @@ async def main():
                     factors = ["Local rule-based calculation fallback"]
                     model_ver = "fallback_rule_v1.0"
                 
-                # Check if there is already a risk score calculated today for this student
-                # We can just write a new risk score record
+                # Generate historical timeline sequence (last 7 days)
+                from datetime import timedelta, timezone
+                now_utc = datetime.now(timezone.utc)
+                
+                for d in range(7, 0, -1):
+                    # Stagger offsets slightly to show a gradual trend
+                    day_offset = (4 - d) * 1.5 + np.random.uniform(-2, 2)
+                    hist_score = max(0.0, min(100.0, score + day_offset))
+                    hist_level = classify_risk_level(hist_score)
+                    
+                    hist_rec = RiskScore(
+                        student_id=s.id,
+                        score=round(hist_score, 2),
+                        risk_level=hist_level,
+                        contributing_factors={"features": features, "factors": ["Historical simulation"]},
+                        model_version=model_ver,
+                        is_overridden=False,
+                        calculated_at=now_utc - timedelta(days=d)
+                    )
+                    session.add(hist_rec)
+
+                # Insert today's risk score (current run)
                 risk_score_rec = RiskScore(
                     student_id=s.id,
                     score=score,
                     risk_level=risk_level,
                     contributing_factors={"features": features, "factors": factors},
                     model_version=model_ver,
-                    is_overridden=False
+                    is_overridden=False,
+                    calculated_at=now_utc
                 )
                 session.add(risk_score_rec)
                 

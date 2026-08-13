@@ -186,9 +186,14 @@ class StudentService:
         if not student:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
 
+        score = override_in.score
+        if score is None:
+            score_map = {"high": 90.0, "medium": 50.0, "low": 10.0}
+            score = score_map.get(override_in.risk_level.lower(), 10.0)
+
         override_score = RiskScore(
             student_id=student_id,
-            score=override_in.score,
+            score=score,
             risk_level=override_in.risk_level.lower(),
             contributing_factors={"override": True, "reason": override_in.reason},
             model_version="manual_override_v1",
