@@ -69,7 +69,7 @@ export default function DashboardPage() {
     medium: c.medium_risk_count,
     low: c.low_risk_count,
   }));
-  const recentAlerts = (alertsData?.items ?? alertsData ?? []).slice(0, 5);
+  const recentAlerts = (alertsData?.items ?? alertsData ?? []).slice(0, 15);
 
   return (
     <div className="space-y-8">
@@ -225,12 +225,15 @@ export default function DashboardPage() {
         {/* Live Alert Feed */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <ShieldAlert className="w-4 h-4 text-red-500" /> Recent Risk Flags
-            </CardTitle>
+            <div>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <ShieldAlert className="w-4 h-4 text-red-500" /> Recent Risk Flags
+              </CardTitle>
+              <CardDescription>Early-warning signals & active counselor flags</CardDescription>
+            </div>
             <Link href="/alerts" className="text-xs text-blue-600 hover:underline">View All →</Link>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="h-72 overflow-y-auto pr-1 space-y-3">
             {alertsLoading ? (
               [1,2,3].map(i => (
                 <div key={i} className="h-16 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />

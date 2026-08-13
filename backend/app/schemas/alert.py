@@ -9,6 +9,7 @@ class AlertResponse(BaseModel):
 
     id: UUID
     student_id: UUID
+    student_name: Optional[str] = None
     alert_type: Optional[str] = None
     message: Optional[str] = None
     severity: str  # 'critical', 'warning', 'info'

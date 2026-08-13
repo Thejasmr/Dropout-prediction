@@ -5,6 +5,7 @@ from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.alert import Alert
+from app.models.student import Student
 from app.schemas.alert import AlertResponse, AlertUpdate
 
 
@@ -17,7 +18,7 @@ class NotificationService:
         is_read: Optional[bool] = None,
         limit: int = 50
     ) -> List[AlertResponse]:
-        query = select(Alert)
+        query = select(Alert, Student.full_name.label("student_name")).join(Student, Alert.student_id == Student.id)
         if severity:
             query = query.where(Alert.severity == severity.lower())
         if is_read is not None:
@@ -25,9 +26,14 @@ class NotificationService:
 
         query = query.order_by(desc(Alert.created_at)).limit(limit)
         result = await session.execute(query)
-        alerts = result.scalars().all()
+        rows = result.all()
 
-        return [AlertResponse.model_validate(a) for a in alerts]
+        alerts_res = []
+        for alert, student_name in rows:
+            res = AlertResponse.model_validate(alert)
+            res.student_name = student_name
+            alerts_res.append(res)
+        return alerts_res
 
     @staticmethod
     async def mark_alert_as_read(
@@ -35,17 +41,20 @@ class NotificationService:
         alert_id: UUID,
         update_in: AlertUpdate
     ) -> AlertResponse:
-        stmt = select(Alert).where(Alert.id == alert_id)
-        alert = (await session.execute(stmt)).scalar_one_or_none()
+        stmt = select(Alert, Student.full_name.label("student_name")).join(Student, Alert.student_id == Student.id).where(Alert.id == alert_id)
+        res = (await session.execute(stmt)).one_or_none()
 
-        if not alert:
+        if not res:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Alert with ID '{alert_id}' not found",
             )
 
+        alert, student_name = res
         alert.is_read = update_in.is_read
         await session.commit()
         await session.refresh(alert)
 
-        return AlertResponse.model_validate(alert)
+        response = AlertResponse.model_validate(alert)
+        response.student_name = student_name
+        return response

@@ -2,8 +2,10 @@ import json
 import os
 from datetime import datetime
 from typing import Dict, Any, Optional
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
+from calculate_all_risks import main as run_risk_recalculation
+
 
 from app.core.database import get_async_session
 from app.core.dependencies import get_current_user
@@ -50,6 +52,7 @@ def _log_ingestion_history(filename: str, processed_records: int, status_str: st
 
 @router.post("/upload")
 async def upload_ingestion_file(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     field_mapping_json: Optional[str] = Form(None),
     entity_type: str = Form("student"),
@@ -82,6 +85,10 @@ async def upload_ingestion_file(
             )
             
         _log_ingestion_history(file.filename or "unknown", len(df) if df is not None else 0, "completed")
+        
+        # Trigger background risk recalculation so that dashboard and rosters update in real-time
+        background_tasks.add_task(run_risk_recalculation)
+        
         return result
         
     except Exception as e:

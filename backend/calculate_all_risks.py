@@ -15,6 +15,7 @@ from app.models.attendance import AttendanceRecord
 from app.models.assessment import AssessmentScore
 from app.models.fee import FeeRecord
 from app.models.risk_score import RiskScore
+from app.models.alert import Alert
 from sqlalchemy import select, desc
 
 
@@ -145,7 +146,8 @@ async def main():
                 
                 # Try calling ML service
                 try:
-                    res = await client.post("http://localhost:8001/ml/v1/predict", json=features, timeout=2.0)
+                    ml_url = os.getenv("ML_SERVICE_URL", "http://localhost:8001")
+                    res = await client.post(f"{ml_url}/ml/v1/predict", json=features, timeout=2.0)
                     if res.status_code == 200:
                         data = res.json()
                         score = data["score"]
@@ -180,6 +182,24 @@ async def main():
                     is_overridden=False
                 )
                 session.add(risk_score_rec)
+                
+                # Proactively create a system alert for high and medium risk students
+                if risk_level in ["high", "medium"]:
+                    severity_map = {"high": "critical", "medium": "warning"}
+                    msg_map = {
+                        "high": f"Student {s.full_name} is flagged at HIGH dropout risk (Score: {score}%). Immediate counselor intervention recommended.",
+                        "medium": f"Student {s.full_name} is flagged at MEDIUM dropout risk (Score: {score}%). Mentor follow-up recommended."
+                    }
+                    
+                    alert_rec = Alert(
+                        student_id=s.id,
+                        alert_type=f"{risk_level}_risk",
+                        message=msg_map[risk_level],
+                        severity=severity_map[risk_level],
+                        is_read=False
+                    )
+                    session.add(alert_rec)
+                    
                 computed_count += 1
                 
             await session.commit()

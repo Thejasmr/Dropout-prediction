@@ -31,9 +31,10 @@ def generate_synthetic_data(num_samples: int = 500) -> pd.DataFrame:
         (100.0 - assignment_submission_rate) * 0.05
     ) / 100.0
 
-    # Classify as dropout if the probability is high (threshold 0.5)
-    dropout = (dropout_prob + np.random.normal(0, 0.05, num_samples)) > 0.50
-    dropout_labels = np.clip(dropout.astype(int), 0, 1)
+    # Clip probability to [0.01, 0.99] and generate labels using Bernoulli trials
+    dropout_prob = np.clip(dropout_prob, 0.01, 0.99)
+    dropout = np.random.rand(num_samples) < dropout_prob
+    dropout_labels = dropout.astype(int)
 
     df = pd.DataFrame({
         "attendance_rate": attendance_rate,
